@@ -16,10 +16,10 @@
   ],
   "scripts": {
     "build": "tsc",
-    "publish-patch": "np patch --no-release-draft",
-    "publish-minor": "np minor --no-release-draft",
-    "publish-major": "np major --no-release-draft",
-    "publish-prerelease": "np prerelease --tag beta --yolo --no-release-draft",
+    "publish-patch": "np patch --no-release-draft --no-2fa",
+    "publish-minor": "np minor --no-release-draft --no-2fa",
+    "publish-major": "np major --no-release-draft --no-2fa",
+    "publish-prerelease": "np prerelease --tag beta --yolo --no-release-draft --no-2fa",
     "prepublish": "npm run build",
     "test": "echo 1"
   },
