@@ -2,7 +2,9 @@
   "name": "@javilobo8/zoso",
   "version": "0.0.1",
   "main": "./lib/index.js",
-  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "directories": {
     "lib": "lib"
   },
