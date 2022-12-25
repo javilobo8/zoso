@@ -10,3 +10,7 @@ export function joinText(text: string) {
   const lines = text.split('\n');
   return lines.join('');
 }
+
+export function isContentEncrypted(content: string) {
+  return content.split(':').length === 2 && /^[a-f0-9]{32}:{1}[a-f0-9\r\n]+$/.test(content);
+}

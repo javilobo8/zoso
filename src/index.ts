@@ -1,7 +1,8 @@
+#!/usr/bin/env node
+
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
-import mkdirp from 'mkdirp';
 import Handlebars from 'handlebars';
 import { program } from 'commander';
 
@@ -9,29 +10,88 @@ import {
   decrypt,
   encrypt,
   encryptAdvanced,
-  decryptAdvanced,
 } from './cypher';
-import { joinText, splitText } from './utils';
+import { joinText, splitText, isContentEncrypted } from './utils';
 
 const currentDir = process.cwd();
 
 const HOSTS_FILE = path.join(currentDir, 'variables/hosts.yml');
 const SECRETS_FILE = path.join(currentDir, 'variables/secrets.yml');
-const CONFIGS_DIR = path.join(currentDir, 'configs');
-const TEMPLATES_DIR = path.join(currentDir, 'templates');
-
 const CONFIGMAPS_DIR = path.join(currentDir, 'configmaps');
 const CONFIGTEMPLATES_DIR = path.join(currentDir, 'configtemplates');
 
-function isContentEncrypted(content: string) {
-  return content.split(':').length === 2 && /^[a-f0-9]{32}:{1}[a-f0-9\r\n]+$/.test(content);
+Handlebars.registerHelper('encryptNode', (value, context) => {
+  if (value === undefined) {
+    throw new Error('Handlebars variable is undefined');
+  }
+  return `ENC(${encryptAdvanced(value, context.data.root.servicePassword)})`;
+});
+
+function getSecrets(): any {
+  const fileContent = fs.readFileSync(SECRETS_FILE).toString('utf-8');
+  if (!isContentEncrypted(fileContent)) {
+    throw new Error('Secrets file is decrypted');
+  }
+  const decrypted = decrypt(joinText(fileContent));
+  return yaml.load(decrypted);
 }
 
-function renderCommand(str: string) {
-  console.log('renderCommand', str);
+function getHosts(): any {
+  const fileContent = fs.readFileSync(HOSTS_FILE).toString('utf-8');
+  return yaml.load(fileContent);
 }
 
-function encryptCommand(str: string) {
+function generateConfigTemplate(serviceName: string) {
+  const configTemplateFilePath = path.join(CONFIGTEMPLATES_DIR, `${serviceName}.config.yml.hbs`);
+  const configMapTemplateFilePath = path.join(CONFIGTEMPLATES_DIR, `${serviceName}.configmap.yml.hbs`);
+  const configMapTargetFilePath = path.join(CONFIGMAPS_DIR, `${serviceName}.configmap.yml`);
+  const secretTargetFilePath = path.join(CONFIGMAPS_DIR, `${serviceName}.secret.yml`);
+
+  const variables: any = {
+    ...getSecrets(),
+    ...getHosts(),
+  };
+
+  if (!variables.service_secrets[serviceName]) {
+    throw new Error(`Service "${serviceName}" does not have service_secret`);
+  }
+
+  const configTemplateFile = fs.readFileSync(configTemplateFilePath).toString('utf-8');
+  const configMapTemplateFile = fs.readFileSync(configMapTemplateFilePath).toString('utf-8');
+
+  const renderedConfig = Handlebars.compile(configTemplateFile)({
+    ...variables,
+    servicePassword: variables.service_secrets[serviceName],
+  });
+
+  const renderedConfigTemplate = Handlebars.compile(configMapTemplateFile)({
+    config: renderedConfig,
+  });
+
+  fs.writeFileSync(configMapTargetFilePath, renderedConfigTemplate);
+
+  console.log(`[secrets] Rendering secrets file for service "${serviceName}"`);
+  const secretsYaml = yaml.dump({
+    apiVersion: 'v1',
+    kind: 'Secret',
+    metadata: {
+      name: serviceName,
+    },
+    stringData: {
+      password: variables.service_secrets[serviceName],
+    },
+  }, { lineWidth: -1 });
+  fs.writeFileSync(secretTargetFilePath, secretsYaml);
+  console.log(`[secrets] Done rendering secrets file for service "${serviceName}"`);
+}
+
+function renderCommand(serviceName: string) {
+  if (serviceName) {
+    generateConfigTemplate(serviceName);
+  }
+}
+
+function encryptCommand() {
   const decryptedSecretsContent = fs.readFileSync(SECRETS_FILE, 'utf8');
   if (isContentEncrypted(decryptedSecretsContent)) {
     throw new Error('Secrets file already encrypted');
@@ -42,9 +102,11 @@ function encryptCommand(str: string) {
   console.log(`File ${SECRETS_FILE} encrypted`);
 }
 
-function decryptCommand(str: string) {
+function decryptCommand() {
   const encryptedSecretsContent = fs.readFileSync(SECRETS_FILE).toString('utf-8');
-  if (!isContentEncrypted(encryptedSecretsContent)) throw new Error('File is already decrypted');
+  if (!isContentEncrypted(encryptedSecretsContent)) {
+    throw new Error('Secrets file already decrypted');
+  }
   const content = joinText(encryptedSecretsContent);
   fs.writeFileSync(SECRETS_FILE, decrypt(content));
   console.log(`File ${SECRETS_FILE} decrypted`);
