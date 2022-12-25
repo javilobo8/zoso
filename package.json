@@ -17,7 +17,7 @@
     "publish-minor": "np minor --no-release-draft",
     "publish-major": "np major --no-release-draft",
     "publish-prerelease": "np prerelease --tag beta --yolo --no-release-draft",
-    "prepublish": "npm run build",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
