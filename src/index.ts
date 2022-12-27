@@ -41,6 +41,11 @@ function getHosts(): any {
   return yaml.load(fileContent);
 }
 
+function indentText(text: string, indent = 4) {
+  const lines = text.split('\n');
+  return lines.map((line) => `${' '.repeat(indent)}${line}`).join('\n');
+}
+
 function generateConfigTemplate(serviceName: string) {
   const configTemplateFilePath = path.join(CONFIGTEMPLATES_DIR, `${serviceName}.config.yml.hbs`);
   const configMapTemplateFilePath = path.join(CONFIGTEMPLATES_DIR, `${serviceName}.configmap.yml.hbs`);
@@ -65,7 +70,7 @@ function generateConfigTemplate(serviceName: string) {
   });
 
   const renderedConfigTemplate = Handlebars.compile(configMapTemplateFile)({
-    config: renderedConfig,
+    config: indentText(renderedConfig),
   });
 
   fs.writeFileSync(configMapTargetFilePath, renderedConfigTemplate);

@@ -66,7 +66,7 @@ metadata:
   namespace: production
 data:
   config.yml: |-
-    {{ config }}
+{{{ config }}}
 ```
 
 `variables/general.yml`
