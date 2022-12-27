@@ -7,7 +7,7 @@ Disclaimer: I've created this package for personal use, is not intented to be ma
 ## Installation
 
 ```
-npm i -S -g @javilobo8/zoso
+npm i -g @javilobo8/zoso
 ```
 
 ## Usage
