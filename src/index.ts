@@ -41,7 +41,7 @@ function getHosts(): any {
   return yaml.load(fileContent);
 }
 
-function indentText(text: string, indent = 4) {
+function indentText(text: string, indent = 6) {
   const lines = text.split('\n');
   return lines.map((line) => `${' '.repeat(indent)}${line}`).join('\n');
 }
