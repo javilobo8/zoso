@@ -42,7 +42,7 @@ function getHosts(): any {
 }
 
 function indentText(text: string, indent = 6) {
-  const lines = text.split('\n');
+  const lines = text.split('\r\n');
   return lines.map((line) => `${' '.repeat(indent)}${line}`).join('\n');
 }
 

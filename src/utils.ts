@@ -7,7 +7,7 @@ export function splitText(text: string, size = 64) {
 }
 
 export function joinText(text: string) {
-  const lines = text.split('\n');
+  const lines = text.split('\r\n');
   return lines.join('');
 }
 
