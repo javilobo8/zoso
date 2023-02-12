@@ -134,4 +134,8 @@ program.command('decrypt')
   .description('decrypt secrets.yml')
   .action(decryptCommand);
 
+program.command('version')
+  .description('show version')
+  .action(() => console.log(require('../package.json').version));
+
 program.parse();
