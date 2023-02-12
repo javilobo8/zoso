@@ -3,7 +3,7 @@ export function splitText(text: string, size = 64) {
   for (let i = 0, length = text.length; i < length; i += size) {
     lines.push(text.substring(i, i + size));
   }
-  return lines.join('\n');
+  return lines.join('\r\n');
 }
 
 export function joinText(text: string) {
